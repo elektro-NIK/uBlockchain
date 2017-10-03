@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 from hashlib import sha256
 from datetime import datetime
+from random import randint
 
 
 class Block:
@@ -48,6 +49,28 @@ class Blockchain:
     def add_block(self, data=''):
         self.chain.append(self._next_block(data))
 
+    def change_block(self, index, data=''):
+        self.chain[index].data = data
+
+    def check(self):
+        status = 'OK'
+        plain = []
+        for block in self.chain:
+            plain.append({
+                'id':   block.index,
+                'time': block.timestamp,
+                'data': block.data,
+                'hash': block.hash,
+            })
+        for i in range(1, len(plain)):
+            sha = sha256()
+            data = str(plain[i]['id']) + str(plain[i]['time']) + str(plain[i]['data']) + str(plain[i-1]['hash'])
+            sha.update(data.encode())
+            if sha.hexdigest() != plain[i]['hash']:
+                status = 'Block #{} compromised!'.format(i)
+                break
+        return status
+
 
 if __name__ == '__main__':
     print('Creating test blockchain...')
@@ -55,3 +78,14 @@ if __name__ == '__main__':
     for i in range(20):
         bc.add_block('Hello, I am block :)')
     print(bc)
+
+    id = randint(1, 20)
+    print('Change some block: {}'.format(id))
+    bc.change_block(id, "It's changed data")
+
+    print('Checking blockchain...')
+    res = bc.check()
+    if res != 'OK':
+        print(res)
+    else:
+        print('Blockchain is ok')
